@@ -1,5 +1,8 @@
 # take-home
 
+- **[Write-up](WRITEUP.md)** — Project overview and trade-offs summary
+- **[Video walkthrough](https://www.loom.com/share/792ce1a6b73c4fc0bd0c5696a8bd6b60)** — Loom recording
+
 CLI chat agent built on [LangChain Deep Agents](https://github.com/langchain-ai/deepagents) with **three memory strategies** that demonstrate how different persistence approaches affect conversational context and recall.
 
 ## Prerequisites
