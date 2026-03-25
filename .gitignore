@@ -20,5 +20,8 @@ build/
 # OS
 .DS_Store
 
+# Pytest
+.pytest_cache/
+
 # uv
 uv.lock

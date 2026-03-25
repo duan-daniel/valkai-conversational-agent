@@ -14,6 +14,7 @@ dependencies = [
 
 [project.scripts]
 chat = "agent.cli:main"
+harness = "agent.harness:main"
 
 [dependency-groups]
 dev = [
