@@ -44,13 +44,7 @@ The harness is a scripted conversation that runs all three memory types side-by-
 uv run harness
 ```
 
-See **[HARNESS.md](HARNESS.md)** for full documentation including:
-- How each memory type works and their LangGraph primitives
-- Memory design dimensions (what/when/how) and trade-offs
-- The design space as a 2x2 matrix (storage strategy vs. scope)
-- Real-world industry context for each memory type
-- Production persistence (swapping to Postgres)
-- Further directions: semantic memory with vector embeddings
+See **[HARNESS.md](HARNESS.md)** for harness documentation and memory analysis, and **[WRITEUP.md](WRITEUP.md)** for a brief project overview.
 
 ## Running evals
 
@@ -83,7 +77,8 @@ Any model supported by LangChain's [`init_chat_model`](https://docs.langchain.co
 take-home/
 ├── pyproject.toml          # uv project config, dependencies, scripts
 ├── .env.example            # API key template
-├── HARNESS.md              # Harness docs, memory analysis, and trade-offs
+├── HARNESS.md              # Harness documentation
+├── WRITEUP.md              # Memory strategy analysis and trade-offs
 ├── src/
 │   └── agent/
 │       ├── core.py         # Agent factory with memory_type support
