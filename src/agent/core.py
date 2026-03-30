@@ -52,7 +52,7 @@ def _make_memory_tools():
         """Recall previously saved facts about the user.
 
         Call this at the start of new conversations or when context seems
-        relevant. Use a broad query like 'user' to retrieve all memories.
+        relevant. The `query` parameter can be useful with semantic memory.
         """
         items = store.search(("user_memories",), limit=20)
         if not items:

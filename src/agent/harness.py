@@ -40,6 +40,9 @@ def _run_conversation(agent, turns, *, config=None, use_checkpointer=False, mess
 
     For checkpointed agents, each turn sends only the new message.
     For baseline agents, the caller-managed message list is accumulated.
+
+    `messages` is only returned to print out how many messages the baseline agent accumulated.
+    `responses` is returned to print out each turn's AI response via `_print_turn`.
     """
     if messages is None:
         messages = []
@@ -69,12 +72,16 @@ def _print_section(title):
 
 
 def _print_turn(user_msg, responses_by_type):
+    """Print one user turn and each strategy's response side-by-side.
+
+    responses_by_type: mem_type -> single AI response string for this turn
+    """
     print(f"\n  User: \"{user_msg}\"")
     print(f"  {SEPARATOR}")
     for mem_type, response in responses_by_type.items():
         # Truncate very long responses for readability
         text = response[:300] + "..." if len(response) > 300 else response
-        print(f"  [{mem_type:>10}]  {text}")
+        print(f"  [{mem_type:>10}]  {text}") # right-align mem_type in 10-character-wide field
     print()
 
 
@@ -90,6 +97,7 @@ def main():
     print(f"{SEPARATOR}\n")
 
     # Build agents
+        # mem_type -> compiled LangGraph agent (one per strategy: "none", "session", "long_term")
     agents = {}
     for mem_type in MEMORY_TYPES:
         print(f"  Creating agent with memory_type={mem_type!r}...")
@@ -101,9 +109,15 @@ def main():
     _print_section("CONVERSATION A — Sharing Information (thread: conv-a)")
     print("  The user shares personal details. We observe how each agent responds.")
 
+    # mem_type -> list of AI response strings, one per turn in CONV_A
     conv_a_responses = {}
-    conv_a_messages = {}  # only used for baseline
 
+    # mem_type -> accumulated message list from _run_conversation;
+    # only meaningful for "none" (baseline), used later to report how many
+    # messages the caller had to manually track
+    conv_a_messages = {}
+
+    # Run all 3 turns of CONV_A through each agent and collects the responses
     for mem_type in MEMORY_TYPES:
         use_cp = mem_type in ("session", "long_term")
         config = {"configurable": {"thread_id": "conv-a"}} if use_cp else None
@@ -117,6 +131,7 @@ def main():
         conv_a_responses[mem_type] = responses
         conv_a_messages[mem_type] = messages
 
+    # For each turn `i`, builds a dict of `memory_type` to `response` 
     for i, turn in enumerate(CONV_A):
         _print_turn(turn, {mt: conv_a_responses[mt][i] for mt in MEMORY_TYPES})
 
@@ -125,6 +140,7 @@ def main():
     _print_section("CONVERSATION B — New Thread (thread: conv-b) — Testing Cross-Thread Recall")
     print("  A brand-new thread. Only long-term memory should recall user facts.")
 
+    # mem_type -> list of AI response strings, one per turn for CONV_B
     conv_b_responses = {}
 
     for mem_type in MEMORY_TYPES:
@@ -147,6 +163,7 @@ def main():
     _print_section("CONVERSATION C — Resume Thread A (thread: conv-a) — Testing Session Resumption")
     print("  Resuming the original thread. Session + long-term should recall; baseline should not.")
 
+    # mem_type -> list of AI response strings, one per turn for CONV_C
     conv_c_responses = {}
 
     for mem_type in MEMORY_TYPES:
@@ -176,7 +193,15 @@ def main():
     # Session: full checkpoint state
     session_agent = agents["session"]
     session_config = {"configurable": {"thread_id": "conv-a"}}
+
+    # state is a StateSnapshot object
     state = session_agent.get_state(session_config)
+
+    # state.values is a dict of all the graph's channel values at the latest checkpoint. 
+        # channels are named slots that hold the graph's state — graph reads from + writes to these channels as nodes execute.
+    # since this is a MessagesState graph, "messages" key holds the full conversation history
+        # create_deep_agent uses MessagesState internally
+    # that the checkpointer has been automatically accumulating.
     checkpoint_msgs = state.values.get("messages", [])
     print(f"  [   session]  Checkpointer stored the full graph state for thread 'conv-a'.")
     print(f"                Contains {len(checkpoint_msgs)} messages (every turn, verbatim):")
